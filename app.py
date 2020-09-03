@@ -14,15 +14,26 @@ def hello():
     return "new Hello Flask!"
 
 @app.route("/company", methods=["GET"])
-def get_company():
-    # http://localhost:5000/company?name=an
-    # http://localhost:5000/company?name=티트
-    name = request.args.get("name")
+def get_company_info() :
+    if 'companyname' in request.args:
+        return get_company_info_from_companyname(request.args.get("companyname"))
+
+    if 'tagname' in request.args:
+        return get_company_info_from_tagname(request.args.get("tagname"))
+
+    return jsonify(
+        responcemessage="fail, parameter check",
+        status=200
+    )
+
+def get_company_info_from_companyname(name):
+    # http://localhost:5000/company?companyname=an
+    # http://localhost:5000/company?companyname=티트
     search = "%{}%".format(name)
     print(search)
 
     # like  search company id, name
-    results = db.session.query(CompanyNameModel.companyId).filter(CompanyNameModel.companyName.like(search)).all()
+    results = db.session.query(CompanyNameModel.companyid).filter(CompanyNameModel.companyname.like(search)).all()
     print (results)
     if len(results) == 0:
         return jsonify(
@@ -31,41 +42,39 @@ def get_company():
         )
 
     company_list = []
-    for companyName, tagnamelist in db.session.query(
-            func.group_concat(CompanyNameModel.companyName.distinct()),
-            func.group_concat(CompanyTagModel.tagName.distinct())
+    for companyname, tagnamelist in db.session.query(
+            func.group_concat(CompanyNameModel.companyname.distinct()),
+            func.group_concat(CompanyTagModel.tagname.distinct())
     ).filter(
-        CompanyTagModel.companyId == CompanyNameModel.companyId
+        CompanyTagModel.companyid == CompanyNameModel.companyid
     ).filter(
-        CompanyNameModel.companyId.in_(db.session.query(CompanyNameModel.companyId).filter(CompanyNameModel.companyName.like(search)))
+        CompanyNameModel.companyid.in_(db.session.query(CompanyNameModel.companyid).filter(CompanyNameModel.companyname.like(search)))
     ).group_by(
-       CompanyNameModel.companyId
+       CompanyNameModel.companyid
     ).all():
-        print(companyName, tagnamelist)
+        print(companyname, tagnamelist)
 
         arr = {}
-        subdic = {companyName: tagnamelist}
+        subdic = {companyname: tagnamelist}
         print (subdic)
         arr = subdic
         company_list.append(arr)
 
     return jsonify(company_list)
 
-@app.route("/company_tag", methods=["GET"])
-def get_company_from_tag():
-    # http://localhost:5000/company_tag?tagname=HR2
-    # http://localhost:5000/company_tag?tagname=서울
-    name = request.args.get("tagname")
+def get_company_info_from_tagname(name):
+    # http://localhost:5000/company?tagname=HR2
+    # http://localhost:5000/company?tagname=서울
     company_list = []
 
     for companynamelist, tagnamelist in db.session.query(
-        func.group_concat(CompanyNameModel.companyName.distinct()), func.group_concat(CompanyTagModel.tagName.distinct())
+        func.group_concat(CompanyNameModel.companyname.distinct()), func.group_concat(CompanyTagModel.tagname.distinct())
     ).filter(
-        CompanyTagModel.companyId == CompanyNameModel.companyId
+        CompanyTagModel.companyid == CompanyNameModel.companyid
     ).filter(
-        CompanyNameModel.companyId.in_(db.session.query(CompanyTagModel.companyId).filter_by(tagName=name))
+        CompanyNameModel.companyid.in_(db.session.query(CompanyTagModel.companyid).filter_by(tagname=name))
     ).group_by(
-        CompanyNameModel.companyId
+        CompanyNameModel.companyid
     ).all() :
         print (companynamelist, tagnamelist)
 
@@ -78,22 +87,22 @@ def get_company_from_tag():
     return jsonify(company_list)
 
 @app.route("/tag/<companyname>/<tagname>", methods=["POST"])
-def create_tag(companyname=None, tagname=None):
+def add_tag(companyname=None, tagname=None):
     # curl -X POST http://localhost:5000/tag/티트/HR
 
     # company id 구하기
-    companyId = CompanyNameModel.getCompanyId(companyname)
-    print(companyId)
+    companyid = CompanyNameModel.getCompanyId(companyname)
+    print(companyid)
 
     # 중복 체크
-    search_tag = CompanyTagModel.query.filter_by(companyId=companyId, tagName=tagname).all()
+    search_tag = CompanyTagModel.query.filter_by(companyid=companyid, tagname=tagname).all()
     if len(search_tag) > 0:
         return jsonify(
             responcemessage="fail, exists data",
             status=200
         )
 
-    tag = CompanyTagModel(companyId, tagname)
+    tag = CompanyTagModel(companyid, tagname)
     db.session.add(tag)
     db.session.commit()
     print(tag)
@@ -107,9 +116,9 @@ def delete_tag(companyname=None, tagname=None):
     # curl -X DELETE http://localhost:5000/tag/wanted/HR2
 
     # company id 구하기
-    companyId = CompanyNameModel.getCompanyId(companyname)
+    companyid = CompanyNameModel.getCompanyId(companyname)
 
-    tags = CompanyTagModel.query.filter_by(companyId=companyId, tagName=tagname).all()
+    tags = CompanyTagModel.query.filter_by(companyid=companyid, tagname=tagname).all()
     if len(tags) == 0 :
         return jsonify(
             responcemessage="fail, not exists data",
