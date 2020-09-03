@@ -40,7 +40,8 @@ def get_company_info_from_companyname(name):
         )
 
     company_list = []
-    for companyname, tagnamelist in db.session.query(
+    for companyid, companynamelist, tagnamelist in db.session.query(
+            CompanyNameModel.companyid,
             func.group_concat(CompanyNameModel.companyname.distinct()),
             func.group_concat(CompanyTagModel.tagname.distinct())
     ).filter(
@@ -50,10 +51,11 @@ def get_company_info_from_companyname(name):
     ).group_by(
        CompanyNameModel.companyid
     ).all():
-        #print(companyname, tagnamelist)
         arr = {}
-        subdic = {companyname: tagnamelist}
-        arr = subdic
+        arr_sub = {}
+        arr_sub["company"] = companynamelist
+        arr_sub["tag"] = tagnamelist.replace(',','|')
+        arr[companyid] = arr_sub
         company_list.append(arr)
 
     return jsonify(company_list)
@@ -63,8 +65,8 @@ def get_company_info_from_tagname(name):
     # http://localhost:5000/company?tagname=서울
     company_list = []
 
-    for companynamelist, tagnamelist in db.session.query(
-        func.group_concat(CompanyNameModel.companyname.distinct()), func.group_concat(CompanyTagModel.tagname.distinct())
+    for companyid, companynamelist, tagnamelist in db.session.query(
+        CompanyNameModel.companyid, func.group_concat(CompanyNameModel.companyname.distinct()), func.group_concat(CompanyTagModel.tagname.distinct())
     ).filter(
         CompanyTagModel.companyid == CompanyNameModel.companyid
     ).filter(
@@ -72,10 +74,11 @@ def get_company_info_from_tagname(name):
     ).group_by(
         CompanyNameModel.companyid
     ).all() :
-        #print (companynamelist, tagnamelist)
         arr = {}
-        subdic = {companynamelist: tagnamelist}
-        arr[name] = subdic
+        arr_sub = {}
+        arr_sub["company"] = companynamelist
+        arr_sub["tag"] = tagnamelist.replace(',','|')
+        arr[companyid] = arr_sub
         company_list.append(arr)
 
     return jsonify(company_list)
