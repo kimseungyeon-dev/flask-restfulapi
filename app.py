@@ -27,8 +27,6 @@ def get_company_info() :
     )
 
 def get_company_info_from_companyname(name):
-    # http://localhost:5000/company?companyname=an
-    # http://localhost:5000/company?companyname=티트
     search = "%{}%".format(name)
     print(search)
 
@@ -63,8 +61,6 @@ def get_company_info_from_companyname(name):
     return jsonify(company_list)
 
 def get_company_info_from_tagname(name):
-    # http://localhost:5000/company?tagname=HR2
-    # http://localhost:5000/company?tagname=서울
     company_list = []
 
     for companynamelist, tagnamelist in db.session.query(
@@ -88,7 +84,6 @@ def get_company_info_from_tagname(name):
 
 @app.route("/tag/<companyname>/<tagname>", methods=["POST"])
 def add_tag(companyname=None, tagname=None):
-    # curl -X POST http://localhost:5000/tag/티트/HR
 
     # company id 구하기
     companyid = CompanyNameModel.getCompanyId(companyname)
@@ -113,7 +108,6 @@ def add_tag(companyname=None, tagname=None):
 
 @app.route("/tag/<companyname>/<tagname>", methods=["DELETE"])
 def delete_tag(companyname=None, tagname=None):
-    # curl -X DELETE http://localhost:5000/tag/wanted/HR2
 
     # company id 구하기
     companyid = CompanyNameModel.getCompanyId(companyname)
