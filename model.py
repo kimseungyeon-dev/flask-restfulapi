@@ -23,7 +23,6 @@ class CompanyNameModel(db.Model):
 
         if len(results) != 0:
             result = results[0]
-            print (result.companyid)
             return result.companyid
 
 
